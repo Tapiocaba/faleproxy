@@ -66,4 +66,37 @@ describe('Integration Tests', () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toBe('URL is required');
   });
+
+  test('Should serve index.html for root path', async () => {
+    const response = await request(app)
+      .get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toBe('text/html');
+  });
+
+  test('Should handle case preservation correctly', async () => {
+    nock('https://example.com')
+      .get('/case-test')
+      .reply(200, `
+        <html>
+          <head>
+            <title>YALE TEST</title>
+          </head>
+          <body>
+            <p>yale test</p>
+            <p>Yale Test</p>
+          </body>
+        </html>
+      `);
+
+    const response = await request(app)
+      .post('/fetch')
+      .send({ url: 'https://example.com/case-test' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.content).toContain('FALE TEST');
+    expect(response.body.content).toContain('fale test');
+    expect(response.body.content).toContain('Fale Test');
+  });
 });
